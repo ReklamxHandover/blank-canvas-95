@@ -1,0 +1,410 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Serif Display';
+  src: url('/fonts/DMSerifDisplay-Regular.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+}
+
+/*
+ * Reskin mapping (Option 2 — slate/shadcn token system).
+ * Future component conversions should swap inline hex → these tokens:
+ *
+ *   Surfaces:
+ *     #ede8e3, #f5f3f0          → bg-background
+ *     #faf9f7                   → bg-muted
+ *     #ffffff (cards/panels)    → bg-card
+ *
+ *   Text:
+ *     #1a1a2e                   → text-foreground
+ *     #7a8394, #b0b8c4          → text-muted-foreground
+ *
+ *   Brand:
+ *     purple #6B7FD4 / #9B5FD4  → primary / bg-primary / text-primary
+ *
+ *   Status:
+ *     green  (#4CAF88)          → success      (--success)
+ *     amber  (#E8A838)          → warning      (--warning)
+ *     red    (#D96B6B)          → destructive  (--destructive)
+ *     blue   (#6B7FD4 status)   → info         (--info)
+ *
+ *   Borders/dividers:
+ *     #f0ede8, #e8e4df          → border
+ */
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --success: oklch(0.68 0.14 155);
+  --success-foreground: oklch(0.984 0.003 247.858);
+  --warning: oklch(0.78 0.14 75);
+  --warning-foreground: oklch(0.208 0.042 265.755);
+  --info: oklch(0.62 0.14 255);
+  --info-foreground: oklch(0.984 0.003 247.858);
+  --stat-footer: #f9f9f9;
+  --row-deadline-green: hsl(130, 45%, 90%);
+  --row-deadline-green-hover: hsl(130, 50%, 85%);
+  --row-deadline-yellow: hsl(48, 70%, 91%);
+  --row-deadline-yellow-hover: hsl(48, 75%, 87%);
+  --row-deadline-orange: hsl(28, 70%, 92%);
+  --row-deadline-orange-hover: hsl(28, 75%, 88%);
+  --row-deadline-red: hsl(0, 55%, 93%);
+  --row-deadline-red-hover: hsl(0, 60%, 89%);
+  --pipeline-not-started: #e2ddd7;
+  --pipeline-not-started-border: #ccc8c2;
+  --pipeline-connector: #e2ddd7;
+  --checklist-pill-bg: #f0ede8;
+  --checklist-pill-fg: #7a8394;
+  --checklist-pill-done-bg: #4CAF8814;
+  --checklist-pill-done-fg: #2f7a5a;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: oklch(0.97 0 0);
+  --card: #171717;
+  --card-foreground: oklch(0.97 0 0);
+  --popover: #171717;
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: #171717;
+  --secondary: #1e1e1e;
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: #1e1e1e;
+  --muted-foreground: oklch(0.70 0 0);
+  --accent: #262626;
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.97 0 0);
+  --border: #262626;
+  --input: #262626;
+  --ring: oklch(0.55 0 0);
+  --chart-1: #e4e4e4;
+  --chart-2: #c7c7c7;
+  --chart-3: #737373;
+  --chart-4: #525252;
+  --chart-5: #262626;
+  --sidebar: #171717;
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.97 0 0);
+  --sidebar-primary-foreground: #171717;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: #262626;
+  --sidebar-ring: oklch(0.55 0 0);
+  --stat-footer: #1e1e1e;
+  --success: oklch(0.72 0.15 155);
+  --success-foreground: oklch(0.129 0.042 264.695);
+  --warning: oklch(0.82 0.15 75);
+  --warning-foreground: oklch(0.129 0.042 264.695);
+  --info: oklch(0.7 0.15 255);
+  --info-foreground: oklch(0.129 0.042 264.695);
+  --row-deadline-green: linear-gradient(to right, #091c15 0%, #091c15 35%, #0a0a0a 100%);
+  --row-deadline-green-hover: linear-gradient(to right, #0d2a20 0%, #0d2a20 45%, #0a0a0a 100%);
+  --row-deadline-yellow: linear-gradient(to right, #3a3409 0%, #3a3409 35%, #0a0a0a 100%);
+  --row-deadline-yellow-hover: linear-gradient(to right, #4a4210 0%, #4a4210 45%, #0a0a0a 100%);
+  --row-deadline-orange: linear-gradient(to right, #2e2415 0%, #2e2415 35%, #0a0a0a 100%);
+  --row-deadline-orange-hover: linear-gradient(to right, #3a2c19 0%, #3a2c19 45%, #0a0a0a 100%);
+  --row-deadline-red: linear-gradient(to right, #3a0f12 0%, #3a0f12 35%, #0a0a0a 100%);
+  --row-deadline-red-hover: linear-gradient(to right, #4a1418 0%, #4a1418 45%, #0a0a0a 100%);
+  --pipeline-not-started: #171717;
+  --pipeline-not-started-border: #2a2a2a;
+  --pipeline-connector: transparent;
+  --checklist-pill-bg: #171717;
+  --checklist-pill-fg: #ffffff;
+  --checklist-pill-done-bg: #1a3326;
+  --checklist-pill-done-fg: #6ee0a9;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+}
+
+/* =========================================================
+ * Responsive overrides (mobile ≤ 768px)
+ * Many components in this codebase use inline styles; these
+ * !important rules target hook classes on key wrappers.
+ * ========================================================= */
+@media (max-width: 768px) {
+  /* OrderDrawer footer: 3-col grid → stacked column */
+  .responsive-footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 12px 16px !important;
+  }
+  .responsive-footer-grid > div {
+    justify-self: stretch !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+  .responsive-footer-grid > div > button {
+    flex: 1 1 auto;
+    min-height: 40px;
+  }
+  .responsive-footer-grid > div:last-child {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+  }
+  .responsive-footer-grid > div:last-child > span { text-align: center; }
+
+  /* OrderDrawer drawer height + padding */
+  .responsive-drawer-shell { height: 95vh !important; }
+
+  /* CalendarView: stack aside above grid */
+  .responsive-cal-root {
+    flex-direction: column !important;
+    gap: 14px !important;
+    max-width: 100% !important;
+  }
+  .responsive-cal-aside {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+  }
+  .responsive-cal-grid {
+    grid-auto-rows: minmax(72px, 1fr) !important;
+  }
+  .responsive-cal-grid .cal-day-num {
+    font-size: 11px !important;
+  }
+
+  /* Mobile: compact stacked day list (hide empty padding days) */
+  .responsive-cal-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .responsive-cal-grid > div[data-in-month="false"] {
+    display: none !important;
+  }
+  .responsive-cal-weekdays {
+    display: none !important;
+  }
+
+  /* Hide floating calculator FAB on mobile calendar; header button takes over */
+  body.mobile-calendar-view .calculator-fab {
+    display: none !important;
+  }
+
+  /* ArtikelregisterView rows: hide manufacturer column */
+  .responsive-article-row {
+    grid-template-columns: 72px 1fr 60px !important;
+    gap: 8px !important;
+    padding: 11px 12px !important;
+  }
+  .responsive-article-row > :nth-child(3) { display: none !important; }
+  .responsive-article-row > :nth-child(4) { text-align: right; }
+
+  /* CreateOrderModal: product attribute grid stacks to 2 cols */
+  .responsive-product-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+  .responsive-create-modal {
+    width: calc(100vw - 16px) !important;
+    max-height: 92vh !important;
+    border-radius: 16px !important;
+  }
+  .responsive-create-modal-body { padding: 16px 18px !important; }
+  .responsive-create-modal-header { padding: 18px 20px 12px !important; }
+
+  /* DocumentBuilderModal: horizontal scroll for wide rows */
+  .responsive-doc-modal {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: 94vh !important;
+  }
+  .responsive-doc-rows-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+  .responsive-doc-rows-scroll > * {
+    min-width: 640px;
+  }
+  .responsive-doc-preview-head {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .responsive-doc-preview-head > div:last-child { text-align: left !important; }
+
+  /* BusinessSettings: tighter card padding */
+  .responsive-business-card {
+    padding: 18px !important;
+    border-radius: 12px !important;
+  }
+
+  /* ClientProfileModal */
+  .responsive-client-modal {
+    max-width: calc(100vw - 16px) !important;
+    max-height: 92vh !important;
+  }
+
+  /* Notification toast: move clear of FloatingCalculator FAB, span width */
+  .responsive-toast-wrapper {
+    right: 10px !important;
+    left: 10px !important;
+    bottom: 76px !important;
+    max-width: none !important;
+  }
+
+  /* Generic 2-col grids that need to stack */
+  .responsive-grid-stack {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Larger tap targets for touch */
+  .responsive-tap button,
+  .responsive-tap a {
+    min-height: 40px;
+  }
+}
+
+/* Order/offer row item fields: stack vertically on phones to avoid horizontal overflow */
+@media (max-width: 768px) {
+  .order-row-fields-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* Desktop: always enforce full 7-column grid, never let it collapse */
+@media (min-width: 769px) {
+  .responsive-cal-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+}
+
+/* Make every fixed-position dialog/drawer/modal respect viewport on phones */
+@media (max-width: 480px) {
+  .responsive-cal-grid {
+    grid-auto-rows: minmax(60px, auto) !important;
+  }
+  .responsive-cal-grid .cal-day-num {
+    font-size: 10px !important;
+  }
+}

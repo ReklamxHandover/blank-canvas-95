@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.restrict_assignee_task_updates() FROM PUBLIC, anon, authenticated;
