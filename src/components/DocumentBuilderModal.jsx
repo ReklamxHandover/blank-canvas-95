@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Plus, Trash2, Download, FileText, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Trash2, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,10 +50,11 @@ export default function DocumentBuilderModal({ order, onClose }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const logoInputRef = useRef(null);
   const rowInputRefs = useRef({});
 
-  // Per-document logo lives in fields.logoUrl (mirrors how item images live in row.image).
+  // Logo always mirrors business_settings.logo_url — there's no per-document
+  // logo upload control, so a value saved on an older document must not be
+  // allowed to shadow later changes made in Företagsinställningar.
   const logoPath = fields.logoUrl || '';
 
   useEffect(() => {
@@ -66,15 +67,12 @@ export default function DocumentBuilderModal({ order, onClose }) {
       ]);
       if (cancelled) return;
       const defaults = defaultFields(order, client);
-      const fallbackLogo = bsRes.data?.logo_url || '';
+      const currentLogo = bsRes.data?.logo_url || '';
       if (docRes.data?.fields) {
         setExistingDoc(docRes.data);
-        const merged = { ...defaults, ...docRes.data.fields };
-        // Back-fill from business_settings only when this document never had its own logo
-        if (!merged.logoUrl && fallbackLogo) merged.logoUrl = fallbackLogo;
-        setFields(merged);
-      } else if (fallbackLogo) {
-        setFields({ ...defaults, logoUrl: fallbackLogo });
+        setFields({ ...defaults, ...docRes.data.fields, logoUrl: currentLogo });
+      } else {
+        setFields({ ...defaults, logoUrl: currentLogo });
       }
       setLoading(false);
     })();
@@ -131,30 +129,6 @@ export default function DocumentBuilderModal({ order, onClose }) {
         return next ? { ...r, artnr: v, benamning: next.benamning } : { ...r, artnr: v };
       }),
     }));
-  };
-
-  const handleLogoFile = async (file) => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      // Remove old per-document logo if it was a stored path
-      if (logoPath && isStoragePath(logoPath)) await removeAsset(logoPath).catch(() => {});
-      const path = await uploadAsset(file, 'logos');
-      setFields(prev => ({ ...prev, logoUrl: path }));
-      // Also persist as the global default so new documents prefill with it.
-      await supabase.from('business_settings').update({ logo_url: path }).eq('id', 1);
-    } finally { setUploading(false); }
-  };
-
-  const handleLogoRemove = async () => {
-    // Clear only this document's logo. Leave the global default untouched
-    // so other rows still prefill from business_settings.
-    if (logoPath && isStoragePath(logoPath)) {
-      const { data: bsRow } = await supabase.from('business_settings').select('logo_url').eq('id', 1).maybeSingle();
-      // Only delete the file if no other reference points at it
-      if (bsRow?.logo_url !== logoPath) await removeAsset(logoPath).catch(() => {});
-    }
-    setFields(prev => ({ ...prev, logoUrl: '' }));
   };
 
   const handleRowImageFile = async (i, file) => {
@@ -584,4 +558,3 @@ const btnPrimary = { background: 'var(--foreground)', color: 'var(--card)', bord
 const btnSecondary = { background: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)', padding: '8px 14px', borderRadius: 8, fontWeight: 500, fontSize: 13, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 };
 const chk = { display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' };
 const previewCard = { padding: 14, background: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 18 };
-const logoDropZone = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '14px 18px', borderRadius: 8, border: '1px dashed var(--border)', background: 'var(--card)', color: 'var(--foreground)', cursor: 'pointer', fontWeight: 500 };

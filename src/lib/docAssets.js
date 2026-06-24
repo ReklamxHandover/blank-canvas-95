@@ -36,6 +36,24 @@ export async function removeAsset(path) {
   await supabase.storage.from(BUCKET).remove([path]);
 }
 
+// doc-assets is a public bucket — a permanent, non-expiring URL for a stored
+// path (as opposed to the short-lived signed URLs used for private assets).
+export function getPublicUrl(path) {
+  if (!path) return null;
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data?.publicUrl || null;
+}
+
+// Deletes the underlying file for a previously-issued public URL, but only
+// when it actually points at our own bucket — external/foreign URLs are left alone.
+export async function removeAssetByPublicUrl(url) {
+  if (!url) return;
+  const prefix = getPublicUrl('');
+  if (!prefix || !url.startsWith(prefix)) return;
+  const path = decodeURIComponent(url.slice(prefix.length).split('?')[0]);
+  if (path) await removeAsset(path);
+}
+
 export async function loadAsDataUrl(value) {
   const url = await resolveAssetUrl(value);
   if (!url) return null;
