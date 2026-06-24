@@ -6,9 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { loadBusinessProfile, FALLBACK_LOGO_URL } from '@/lib/businessProfile';
 import { uploadAsset, removeAsset, resolveAssetUrl, loadAsDataUrl, isStoragePath } from '@/lib/docAssets';
 import { useApp } from '../context/AppContext.jsx';
-import reklamxLogoAsset from '@/assets/reklamx-logo.png.asset.json';
-
-const PERMANENT_LOGO_URL = reklamxLogoAsset.url;
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -181,8 +178,9 @@ export default function DocumentBuilderModal({ order, onClose }) {
     setSaving(true);
     try {
       const bp = await loadBusinessProfile();
-      // Permanent ReklamX logo on every generated document — no upload option.
-      await generatePdf(fields, { ...bp, logoUrl: PERMANENT_LOGO_URL });
+      // Logo comes from business_settings.logo_url (loadBusinessProfile already
+      // falls back to FALLBACK_LOGO_URL when the column is empty).
+      await generatePdf(fields, bp);
       const payload = { order_id: order.id, fields };
       if (existingDoc?.id) {
         await supabase.from('documents').update({ fields }).eq('id', existingDoc.id);
@@ -218,7 +216,7 @@ export default function DocumentBuilderModal({ order, onClose }) {
             <div className="responsive-doc-preview-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
               <div style={{ flex: '0 0 auto' }}>
                 <img
-                  src={PERMANENT_LOGO_URL}
+                  src={logoPreview || FALLBACK_LOGO_URL}
                   alt="ReklamX"
                   style={{ maxWidth: 360, maxHeight: 120, objectFit: 'contain', display: 'block' }}
                 />
