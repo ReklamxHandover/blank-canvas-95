@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useLang } from '../context/LanguageContext.jsx';
-import { listUsersWithEmails, updateUserRole } from '@/lib/users.functions';
+import { authedFetch } from '@/lib/apiClient';
 
 const ROLE_OPTIONS = ['owner', 'staff', 'designer', 'producer'];
 
@@ -22,7 +22,7 @@ export default function UserManagement() {
   const loadUsers = async () => {
     setLoading(true); setError('');
     try {
-      const data = await listUsersWithEmails();
+      const data = await authedFetch('/api/users');
       setUsers(data);
     } catch (e) {
       setError(e?.message || 'Kunde inte ladda användare');
@@ -37,7 +37,7 @@ export default function UserManagement() {
     const prev = users;
     setUsers(u => u.map(x => (x.id === userId ? { ...x, role } : x)));
     try {
-      await updateUserRole({ data: { userId, role } });
+      await authedFetch('/api/users', { method: 'POST', body: JSON.stringify({ userId, role }) });
     } catch (e) {
       setUsers(prev);
       alert('Kunde inte uppdatera roll: ' + (e?.message || 'okänt fel'));
