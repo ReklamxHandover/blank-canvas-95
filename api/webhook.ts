@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { createHmac } from "crypto";
-import { requireAuth, AuthError } from "./_lib/auth";
+import { createHmac } from "node:crypto";
+import { requireAuth, AuthError } from "./_lib/auth.js";
 
 const InputSchema = z.object({
   event: z.string().min(1).max(120),

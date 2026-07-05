@@ -231,6 +231,12 @@ export const translations = {
     role_staff: 'Kundtjänst',
     role_designer: 'Designer',
     role_producer: 'Producent',
+    // User management
+    createUser: 'Skapa användare',
+    nameLabel: 'Namn',
+    passwordLabel: 'Lösenord',
+    roleLabel: 'Roll',
+    confirmOwnRoleChange: 'Du är på väg att ändra din egen roll från Ägare. Du förlorar då åtkomst till den här sidan. Vill du fortsätta?',
     // Misc
     kr: 'kr',
     noPrice: 'Ej satt',
@@ -517,6 +523,12 @@ export const translations = {
     role_staff: 'Customer Service',
     role_designer: 'Designer',
     role_producer: 'Producer',
+    // User management
+    createUser: 'Create user',
+    nameLabel: 'Name',
+    passwordLabel: 'Password',
+    roleLabel: 'Role',
+    confirmOwnRoleChange: 'You are about to change your own role from Owner. You will lose access to this page. Continue?',
     // Misc
     kr: 'kr',
     noPrice: 'Not set',
