@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { Component, type ReactNode } from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { HashRouter, Routes, Route, Link } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "./styles.css";
@@ -65,7 +65,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
               Try again
             </button>
             <a
-              href="/"
+              href={import.meta.env.BASE_URL}
               className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
             >
               Go home
@@ -90,13 +90,13 @@ function Root() {
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/" element={<Root />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <FloatingCalculator />
-      </BrowserRouter>
+      </HashRouter>
     </QueryClientProvider>
   </ErrorBoundary>,
 );

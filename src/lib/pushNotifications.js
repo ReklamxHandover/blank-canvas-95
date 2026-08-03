@@ -1,7 +1,7 @@
 // Web push / SW-backed OS notifications.
 // Registers a messaging service worker and exposes helpers to show notifications.
 
-const SW_URL = '/notification-sw.js';
+const SW_URL = `${import.meta.env.BASE_URL}notification-sw.js`;
 
 let registrationPromise = null;
 
@@ -14,7 +14,7 @@ export function isSupported() {
 export async function ensureRegistration() {
   if (!isSupported()) return null;
   if (!registrationPromise) {
-    registrationPromise = navigator.serviceWorker.register(SW_URL, { scope: '/' })
+    registrationPromise = navigator.serviceWorker.register(SW_URL, { scope: import.meta.env.BASE_URL })
       .catch(err => { console.warn('[push] SW register failed', err); registrationPromise = null; return null; });
   }
   return registrationPromise;

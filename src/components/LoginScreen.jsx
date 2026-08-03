@@ -26,7 +26,7 @@ export default function LoginScreen() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-10">
       <div className="mb-8 flex flex-col items-center text-center">
-        <img src="/ReklamX_Logo.png" alt="ReklamX" className="h-16 block" />
+        <img src={`${import.meta.env.BASE_URL}ReklamX_Logo.png`} alt="ReklamX" className="h-16 block" />
       </div>
 
       <form

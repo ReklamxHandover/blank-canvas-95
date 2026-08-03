@@ -1,9 +1,16 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { requireAuth, AuthError } from "./_lib/auth.js";
-import { getSupabaseAdmin } from "./_lib/supabase-admin.js";
+import { z } from "npm:zod@3";
+import { corsHeaders, handleOptions } from "../_shared/cors.ts";
+import { requireAuth, AuthError } from "../_shared/auth.ts";
+import { getSupabaseAdmin } from "../_shared/supabase-admin.ts";
 
 const ROLES = ["owner", "staff", "designer", "producer"] as const;
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 async function assertOwner(userId: string) {
   const { data, error } = await getSupabaseAdmin()
@@ -25,7 +32,10 @@ async function countOwners() {
   return count ?? 0;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+Deno.serve(async (req) => {
+  const preflight = handleOptions(req);
+  if (preflight) return preflight;
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const { userId } = await requireAuth(req);
@@ -49,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (u.id && u.email) emailById.set(u.id, u.email);
       }
 
-      return res.status(200).json(
+      return json(
         (profiles ?? []).map((p) => ({
           id: p.id,
           fullName: p.full_name ?? "",
@@ -64,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         userId: z.string().uuid(),
         role: z.enum(ROLES),
       });
-      const data = Body.parse(req.body);
+      const data = Body.parse(await req.json());
 
       if (data.role !== "owner") {
         const { data: target, error: targetErr } = await supabaseAdmin
@@ -74,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .maybeSingle();
         if (targetErr) throw new Error(targetErr.message);
         if (target?.role === "owner" && (await countOwners()) <= 1) {
-          return res.status(400).json({ error: "Cannot remove the last owner" });
+          return json({ error: "Cannot remove the last owner" }, 400);
         }
       }
 
@@ -83,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .update({ role: data.role, updated_at: new Date().toISOString() })
         .eq("id", data.userId);
       if (error) throw new Error(error.message);
-      return res.status(200).json({ ok: true });
+      return json({ ok: true });
     }
 
     if (req.method === "PUT") {
@@ -93,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         fullName: z.string().trim().min(1),
         role: z.enum(ROLES),
       });
-      const data = Body.parse(req.body);
+      const data = Body.parse(await req.json());
 
       const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email: data.email,
@@ -101,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email_confirm: true,
         user_metadata: { full_name: data.fullName },
       });
-      if (createErr) return res.status(400).json({ error: createErr.message });
+      if (createErr) return json({ error: createErr.message }, 400);
 
       const newId = created.user.id;
       const now = new Date().toISOString();
@@ -119,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq("id", newId);
       if (roleErr) throw new Error(roleErr.message);
 
-      return res.status(200).json({
+      return json({
         id: newId,
         email: data.email,
         fullName: data.fullName,
@@ -127,14 +137,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    res.setHeader("Allow", "GET, POST, PUT");
-    return res.status(405).json({ error: "Method not allowed" });
+    return json({ error: "Method not allowed" }, 405);
   } catch (e) {
-    if (e instanceof AuthError) return res.status(e.status).json({ error: e.message });
+    if (e instanceof AuthError) return json({ error: e.message }, e.status);
     if (e instanceof z.ZodError) {
-      return res.status(400).json({ error: e.issues.map((i) => i.message).join(", ") });
+      return json({ error: e.issues.map((i) => i.message).join(", ") }, 400);
     }
     console.error(e);
-    return res.status(500).json({ error: (e as Error).message });
+    return json({ error: (e as Error).message }, 500);
   }
-}
+});

@@ -1,11 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../../src/integrations/supabase/types";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Server-side Supabase client with service role key - bypasses RLS.
-// SECURITY: only for trusted server-side code under /api, never expose to the client.
+// SECURITY: only for trusted server-side code in Edge Functions, never expose to the client.
 function createAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
@@ -15,7 +14,7 @@ function createAdminClient() {
     throw new Error(`Missing Supabase environment variable(s): ${missing.join(", ")}`);
   }
 
-  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

@@ -86,13 +86,13 @@ export function AppSidebar() {
 					<button type="button" onClick={() => handleNavigate('dashboard')} className="flex items-center justify-center w-full p-0">
 						{collapsed ? (
 							<>
-								<img src="/logos/reklamx-x-black.png" alt="ReklamX" className="mx-auto block size-8 object-contain dark:hidden" />
-								<img src="/logos/reklamx-x-white.png" alt="ReklamX" className="mx-auto hidden size-8 object-contain dark:block" />
+								<img src={`${import.meta.env.BASE_URL}logos/reklamx-x-black.png`} alt="ReklamX" className="mx-auto block size-8 object-contain dark:hidden" />
+								<img src={`${import.meta.env.BASE_URL}logos/reklamx-x-white.png`} alt="ReklamX" className="mx-auto hidden size-8 object-contain dark:block" />
 							</>
 						) : (
 							<>
-								<img src="/logos/reklamx-black.png" alt="ReklamX" className="h-[32px] w-auto dark:hidden" />
-								<img src="/logos/reklamx-white.png" alt="ReklamX" className="hidden h-[32px] w-auto dark:block" />
+								<img src={`${import.meta.env.BASE_URL}logos/reklamx-black.png`} alt="ReklamX" className="h-[32px] w-auto dark:hidden" />
+								<img src={`${import.meta.env.BASE_URL}logos/reklamx-white.png`} alt="ReklamX" className="hidden h-[32px] w-auto dark:block" />
 							</>
 						)}
 					</button>

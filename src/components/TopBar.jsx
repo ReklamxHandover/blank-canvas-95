@@ -37,7 +37,7 @@ export default function TopBar() {
     <header className="h-16 bg-card border-b border-border flex items-center px-7 gap-4 shrink-0 z-10">
       {/* Logo */}
       <div className="shrink-0">
-        <img src="/ReklamX_Logo.png" alt="ReklamX" className="h-9 block" />
+        <img src={`${import.meta.env.BASE_URL}ReklamX_Logo.png`} alt="ReklamX" className="h-9 block" />
       </div>
 
       {/* Center badges */}

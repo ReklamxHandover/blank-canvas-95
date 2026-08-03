@@ -1,1 +1,10 @@
 project_id = "eytzjobmwkwcitcseumw"
+
+[functions.health]
+verify_jwt = false
+
+[functions.users]
+verify_jwt = true
+
+[functions.webhook]
+verify_jwt = true

@@ -29,7 +29,7 @@ export default function UserManagement() {
   const loadUsers = async () => {
     setLoading(true); setError('');
     try {
-      const data = await authedFetch('/api/users');
+      const data = await authedFetch('users');
       setUsers(data);
     } catch (e) {
       setError(e?.message || 'Kunde inte ladda användare');
@@ -48,7 +48,7 @@ export default function UserManagement() {
     const prev = users;
     setUsers(u => u.map(x => (x.id === userId ? { ...x, role } : x)));
     try {
-      await authedFetch('/api/users', { method: 'POST', body: JSON.stringify({ userId, role }) });
+      await authedFetch('users', { method: 'POST', body: JSON.stringify({ userId, role }) });
     } catch (e) {
       setUsers(prev);
       alert('Kunde inte uppdatera roll: ' + (e?.message || 'okänt fel'));
@@ -59,7 +59,7 @@ export default function UserManagement() {
     e.preventDefault();
     setCreating(true); setCreateError('');
     try {
-      await authedFetch('/api/users', {
+      await authedFetch('users', {
         method: 'PUT',
         body: JSON.stringify({
           fullName: form.fullName.trim(),
