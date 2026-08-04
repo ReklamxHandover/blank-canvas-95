@@ -12,7 +12,7 @@ import ValuesBuilder from './ValuesBuilder.jsx';
 import ProductionChecklist from './ProductionChecklist.jsx';
 import DocumentBuilderModal from './DocumentBuilderModal.jsx';
 import ExtraCostsEditor, { ExtraCostsReadOnly } from './ExtraCostsEditor.jsx';
-import { OfferTotals } from './CreateOrderModal.jsx';
+import { OfferTotals, computeOfferTotals } from './CreateOrderModal.jsx';
 
 let _ecLocalKey = 1;
 const newExtraKey = () => `ec_local_${++_ecLocalKey}`;
@@ -1150,7 +1150,15 @@ function EditableProducts({ order, t, extrasByItem = {}, onExtraAdd, onExtraChan
   const manufacturerInhouse = !!(manufacturers || []).find(m => m.name === order.manufacturer)?.is_inhouse;
   const isReklamX = order.manufacturer === 'ReklamX';
 
-  const persistProducts = (next) => updateOrder(order.id, { products: next });
+  // Recompute the offer total (qty * item price + all extra costs) so it
+  // stays correct on every product edit — not just when extras themselves
+  // are touched. See computeOfferTotals in CreateOrderModal for the same math.
+  const persistProducts = (next) => {
+    const { exkl } = computeOfferTotals(next, extrasByItem);
+    const hasPrice = next.some(p => p.price !== null && p.price !== undefined && p.price !== '')
+      || Object.values(extrasByItem).flat().length > 0;
+    updateOrder(order.id, { products: next, price: hasPrice ? exkl : null });
+  };
 
   const handleChange = (id, field, val) => {
     persistProducts(order.products.map(p => p.id === id ? { ...p, [field]: val } : p));

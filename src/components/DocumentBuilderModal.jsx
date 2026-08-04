@@ -42,6 +42,11 @@ function defaultFields(order, client) {
 export default function DocumentBuilderModal({ order, onClose }) {
   const { getClient, items } = useApp();
   const client = getClient(order.clientId);
+  // Offerter page shows orders whose pris_godkant stage isn't reached yet —
+  // same underlying order object, just printed as a quote instead of a
+  // confirmed order (see getFilteredOrders scope 'offers' in AppContext.jsx).
+  const isOffert = order?.pipeline?.forhandling?.status !== 'pris_godkant';
+  const docTitle = isOffert ? 'Offertbekräftelse' : 'Orderbekräftelse';
 
   const [existingDoc, setExistingDoc] = useState(null);
   const [fields, setFields] = useState(() => defaultFields(order, client));
@@ -154,7 +159,7 @@ export default function DocumentBuilderModal({ order, onClose }) {
       const bp = await loadBusinessProfile();
       // Logo comes from business_settings.logo_url (loadBusinessProfile already
       // falls back to FALLBACK_LOGO_URL when the column is empty).
-      await generatePdf(fields, bp);
+      await generatePdf(fields, bp, docTitle);
       const payload = { order_id: order.id, fields };
       if (existingDoc?.id) {
         await supabase.from('documents').update({ fields }).eq('id', existingDoc.id);
@@ -177,7 +182,7 @@ export default function DocumentBuilderModal({ order, onClose }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <FileText size={18} />
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>
-              Orderbekräftelse — {order.id}
+              {docTitle} — {order.id}
               {existingDoc && <span style={{ marginLeft: 10, fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 500 }}>(sparat dokument)</span>}
             </h3>
           </div>
@@ -196,7 +201,7 @@ export default function DocumentBuilderModal({ order, onClose }) {
                 />
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>Orderbekräftelse</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>{docTitle}</div>
                 <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>{fields.orderNr || '—'}</div>
               </div>
             </div>
@@ -338,7 +343,7 @@ export default function DocumentBuilderModal({ order, onClose }) {
 }
 
 /* ---------- PDF generation ---------- */
-async function generatePdf(f, bp) {
+async function generatePdf(f, bp, docTitle = 'Orderbekräftelse') {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -360,7 +365,7 @@ async function generatePdf(f, bp) {
   // Title
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('Orderbekräftelse', pageW - margin, margin + 18, { align: 'right' });
+  doc.text(docTitle, pageW - margin, margin + 18, { align: 'right' });
 
   let y = margin + 100;
   doc.setFont('helvetica', 'normal');
@@ -470,7 +475,8 @@ async function generatePdf(f, bp) {
   col2.forEach((l, i) => doc.text(l, margin + (pageW - margin * 2) / 3, fy + 14 + i * 10));
   col3.forEach((l, i) => doc.text(l, pageW - margin, fy + 14 + i * 10, { align: 'right' }));
 
-  doc.save(`Orderbekraftelse_${f.orderNr || 'dokument'}.pdf`);
+  const fileTitle = docTitle === 'Offertbekräftelse' ? 'Offertbekraftelse' : 'Orderbekraftelse';
+  doc.save(`${fileTitle}_${f.orderNr || 'dokument'}.pdf`);
 }
 
 // Compute contain-fit dimensions for jsPDF addImage preserving aspect ratio.

@@ -256,14 +256,14 @@ export function AppProvider({ children }) {
     if ('manufacturer' in changes) dbPatch.manufacturer = changes.manufacturer;
     if ('products' in changes) {
       dbPatch.products = changes.products;
-      // Auto-update offer-level price = sum of item prices.
-      // If no item has a price, fall back to null (price not yet set).
-      const itemsWithPrice = (changes.products || []).filter(p => p.price !== null && p.price !== undefined && p.price !== '');
-      const sum = itemsWithPrice.length > 0
-        ? itemsWithPrice.reduce((s, p) => s + Number(p.price || 0), 0)
-        : null;
-      dbPatch.price = sum;
-      updated.price = sum;
+      // Note: price is NOT auto-derived here — it must account for quantity
+      // and per-item extra costs (extra_costs table), which this function has
+      // no knowledge of. Callers that change products and need the total to
+      // stay accurate must pass `price` explicitly in the same update (see
+      // OrderDrawer's persistProducts). Previously this recomputed price as a
+      // naive sum of item prices, silently dropping quantity multipliers and
+      // extra costs on every product edit (including unrelated ones like
+      // ticking a production checklist).
     }
     if ('attachments' in changes) dbPatch.attachments = changes.attachments;
     if ('pipeline' in changes) dbPatch.pipeline = changes.pipeline;
