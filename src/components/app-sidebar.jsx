@@ -44,7 +44,7 @@ export function AppSidebar() {
 
 	const groups = [
 		{
-			label: t('overview') || 'Översikt',
+			label: t('overview'),
 			items: [
 				{ key: 'dashboard', title: t('dashboard'), icon: LayoutDashboard, show: true },
 				{
@@ -59,14 +59,14 @@ export function AppSidebar() {
 			],
 		},
 		{
-			label: t('registers') || 'Register',
+			label: t('registers'),
 			items: [
 				{ key: 'items', title: t('itemRegister'), icon: Package, show: true },
 				{ key: 'clients', title: t('clients'), icon: Building2, show: true },
 			],
 		},
 		{
-			label: t('admin') || 'Administration',
+			label: t('admin'),
 			items: [
 				{ key: 'bin', title: t('bin'), icon: Trash2, show: canSeeBin },
 				{ key: 'activityLog', title: t('activityLog'), icon: Activity, show: canSeeLog },

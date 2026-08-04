@@ -69,11 +69,15 @@ export const translations = {
     activeProduction: 'Aktiv prod',
     logout: 'Logga ut',
     // Offers page
-    newOrder: 'Add Offer',
+    newOrder: 'Lägg till offert',
     searchOrders: 'Sök på offert-ID, kund eller produkt...',
     orders_heading: 'Offerter',
     designerView: 'Mina Designuppdrag',
     producerView: 'Produktionskö',
+    // Sidebar groups
+    overview: 'Översikt',
+    registers: 'Register',
+    admin: 'Administration',
     // Summary cards
     totalInProgress: 'Totalt under bearbetning',
     activeOrders: 'Aktiva offerter',
@@ -366,6 +370,10 @@ export const translations = {
     orders_heading: 'Offers',
     designerView: 'My design assignments',
     producerView: 'Production queue',
+    // Sidebar groups
+    overview: 'Overview',
+    registers: 'Registers',
+    admin: 'Administration',
     // Summary cards
     totalInProgress: 'Total in progress',
     activeOrders: 'Active offers',
