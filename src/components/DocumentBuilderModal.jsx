@@ -143,11 +143,16 @@ export default function DocumentBuilderModal({ order, onClose }) {
     return (price !== null && price !== undefined && price !== '') ? price : '';
   };
 
-  // Summa = antal × à-pris. If à-pris is missing there is nothing to base a
-  // total on, so summa stays blank even when antal is known. If antal is
-  // missing but à-pris is known, summa just mirrors the à-pris (qty of 1).
+  // Summa = antal × à-pris. Uses the row's own à-pris value if one is already
+  // set (typed in, or prefilled earlier via the À-pris checkbox); otherwise
+  // falls back to the order's source price for that item, so Visa Summa
+  // works standalone even if Visa À-pris was never checked.
+  // If à-pris is missing there is nothing to base a total on, so summa stays
+  // blank even when antal is known. If antal is missing but à-pris is known,
+  // summa just mirrors the à-pris (qty of 1).
   const computeSumma = (row) => {
-    const pris = row.aPris;
+    const rowPris = row.aPris;
+    const pris = (rowPris !== '' && rowPris !== null && rowPris !== undefined) ? rowPris : sourcePrisForRow(row);
     const hasPris = pris !== '' && pris !== null && pris !== undefined && !isNaN(Number(pris));
     if (!hasPris) return '';
     const prisNum = Number(pris);
