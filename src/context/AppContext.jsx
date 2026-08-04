@@ -56,7 +56,7 @@ const mapActivity = (row) => ({
   clientId: row.client_id || '',
 });
 
-async function buildUserFromSession(userId) {
+async function buildUserFromSession(userId, email) {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, role')
@@ -64,7 +64,7 @@ async function buildUserFromSession(userId) {
     .maybeSingle();
   if (error || !data) return null;
   const name = data.full_name || '';
-  return { id: data.id, name, initials: initialsFromName(name), role: data.role };
+  return { id: data.id, name, initials: initialsFromName(name), role: data.role, email: email || '' };
 }
 
 // ---------- provider ----------
@@ -103,14 +103,14 @@ export function AppProvider({ children }) {
         return;
       }
       setTimeout(async () => {
-        const user = await buildUserFromSession(session.user.id);
+        const user = await buildUserFromSession(session.user.id, session.user.email);
         if (mounted) { setCurrentUser(user); setAuthReady(true); }
       }, 0);
     });
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
       if (!session?.user) { setAuthReady(true); return; }
-      const user = await buildUserFromSession(session.user.id);
+      const user = await buildUserFromSession(session.user.id, session.user.email);
       if (mounted) { setCurrentUser(user); setAuthReady(true); }
     });
     return () => { mounted = false; subscription.unsubscribe(); };
@@ -206,7 +206,7 @@ export function AppProvider({ children }) {
     if (error || !data.user) {
       return { ok: false, error: error?.message || 'Felaktig e-post eller lösenord.' };
     }
-    const user = await buildUserFromSession(data.user.id);
+    const user = await buildUserFromSession(data.user.id, data.user.email);
     if (!user) return { ok: false, error: 'Kunde inte hämta profil. Kontakta administratören.' };
     setCurrentUser(user);
     setView('orders'); setSelectedOrderId(null);

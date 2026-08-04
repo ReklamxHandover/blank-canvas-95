@@ -21,7 +21,7 @@ function defaultFields(order, client) {
     showDeliveryDate: false, deliveryDate: '',
     logoUrl: '', // per-document logo (doc-assets storage path or URL)
     rows: (order?.products || []).map(p => ({
-      artnr: p.artnr || '',
+      artnr: p.article_number || '',
       benamning: p.name || p.benamning || '',
       antal: p.quantity || 1,
       levAnt: '',
@@ -123,6 +123,65 @@ export default function DocumentBuilderModal({ order, onClose }) {
     const img = fields.rows[i]?.image;
     if (img && isStoragePath(img)) removeAsset(img).catch(() => {});
     setFields(prev => ({ ...prev, rows: prev.rows.filter((_, idx) => idx !== i) }));
+  };
+
+  // Looks up the "pris (styck)" for a row from the order's own product lines
+  // (order.products[].price, set in OrderDrawer) — matched by artnr, falling
+  // back to name if the row has no artnr. Returns '' when no price was ever
+  // entered for that item, so the caller knows not to prefill anything.
+  const sourcePrisForRow = (row) => {
+    const products = order?.products || [];
+    let match = null;
+    if (row.artnr) {
+      match = products.find(p => String(p.article_number || '').trim() === String(row.artnr).trim());
+    }
+    if (!match && row.benamning) {
+      match = products.find(p => (p.name || '').trim() === String(row.benamning).trim());
+    }
+    if (!match) return '';
+    const price = match.price;
+    return (price !== null && price !== undefined && price !== '') ? price : '';
+  };
+
+  // Summa = antal × à-pris. If à-pris is missing there is nothing to base a
+  // total on, so summa stays blank even when antal is known. If antal is
+  // missing but à-pris is known, summa just mirrors the à-pris (qty of 1).
+  const computeSumma = (row) => {
+    const pris = row.aPris;
+    const hasPris = pris !== '' && pris !== null && pris !== undefined && !isNaN(Number(pris));
+    if (!hasPris) return '';
+    const prisNum = Number(pris);
+    const hasAntal = row.antal !== '' && row.antal !== null && row.antal !== undefined && !isNaN(Number(row.antal));
+    if (!hasAntal) return String(prisNum);
+    return String(prisNum * Number(row.antal));
+  };
+
+  const handleToggleShowAPris = (checked) => {
+    setFields(prev => ({
+      ...prev,
+      showAPris: checked,
+      rows: checked
+        ? prev.rows.map(r => {
+            if (r.aPris !== '' && r.aPris !== null && r.aPris !== undefined) return r;
+            const src = sourcePrisForRow(r);
+            return src !== '' ? { ...r, aPris: src } : r;
+          })
+        : prev.rows,
+    }));
+  };
+
+  const handleToggleShowSumma = (checked) => {
+    setFields(prev => ({
+      ...prev,
+      showSumma: checked,
+      rows: checked
+        ? prev.rows.map(r => {
+            if (r.summa !== '' && r.summa !== null && r.summa !== undefined) return r;
+            const computed = computeSumma(r);
+            return computed !== '' ? { ...r, summa: computed } : r;
+          })
+        : prev.rows,
+    }));
   };
 
   const onArtnrChange = (i, v) => {
@@ -240,8 +299,8 @@ export default function DocumentBuilderModal({ order, onClose }) {
 
           <Section title="Produktrader">
             <div style={{ display: 'flex', gap: 14, marginBottom: 10, fontSize: 12 }}>
-              <label style={chk}><input type="checkbox" checked={fields.showAPris} onChange={e => set('showAPris', e.target.checked)} /> Visa À-pris</label>
-              <label style={chk}><input type="checkbox" checked={fields.showSumma} onChange={e => set('showSumma', e.target.checked)} /> Visa Summa</label>
+              <label style={chk}><input type="checkbox" checked={fields.showAPris} onChange={e => handleToggleShowAPris(e.target.checked)} /> Visa À-pris</label>
+              <label style={chk}><input type="checkbox" checked={fields.showSumma} onChange={e => handleToggleShowSumma(e.target.checked)} /> Visa Summa</label>
             </div>
 
             <div className="responsive-doc-rows-scroll">

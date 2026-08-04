@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Copy, Check, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 import { useLang } from '../context/LanguageContext.jsx';
 import { authedFetch } from '@/lib/apiClient';
 
 const ROLE_OPTIONS = ['owner', 'staff', 'designer', 'producer'];
+
+const SUPER_OWNER_EMAIL = 'owner@reklamx.se';
 
 const EMPTY_FORM = { fullName: '', email: '', password: '', role: 'staff' };
 
@@ -16,6 +19,7 @@ function initials(name) {
 export default function UserManagement() {
   const { currentUser } = useApp();
   const { t } = useLang();
+  const isSuperOwner = (currentUser?.email || '').toLowerCase() === SUPER_OWNER_EMAIL;
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +29,10 @@ export default function UserManagement() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+
+  const [revealedIds, setRevealedIds] = useState(() => new Set());
+  const [copiedId, setCopiedId] = useState(null);
+  const [busyId, setBusyId] = useState(null);
 
   const loadUsers = async () => {
     setLoading(true); setError('');
@@ -79,6 +87,56 @@ export default function UserManagement() {
   };
 
   const setField = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
+
+  const toggleReveal = (userId) => {
+    setRevealedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId); else next.add(userId);
+      return next;
+    });
+  };
+
+  const handleCopyPassword = async (userId, password) => {
+    try {
+      await navigator.clipboard.writeText(password || '');
+      setCopiedId(userId);
+      setTimeout(() => setCopiedId(id => (id === userId ? null : id)), 1500);
+    } catch {
+      window.prompt(t('copyPasswordManually'), password || '');
+    }
+  };
+
+  const handleResetPassword = async (userId) => {
+    const newPassword = window.prompt(t('resetPasswordPrompt'));
+    if (!newPassword) return;
+    if (newPassword.length < 6) {
+      alert(t('passwordTooShort'));
+      return;
+    }
+    setBusyId(userId);
+    try {
+      await authedFetch('users', { method: 'PATCH', body: JSON.stringify({ userId, password: newPassword }) });
+      await loadUsers();
+    } catch (e) {
+      alert(t('resetPasswordError') + ': ' + (e?.message || 'okänt fel'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    const ok = window.confirm(t('confirmDeleteUser').replace('{name}', user.fullName || user.email || ''));
+    if (!ok) return;
+    setBusyId(user.id);
+    try {
+      await authedFetch('users', { method: 'DELETE', body: JSON.stringify({ userId: user.id }) });
+      setUsers(u => u.filter(x => x.id !== user.id));
+    } catch (e) {
+      alert(t('deleteUserError') + ': ' + (e?.message || 'okänt fel'));
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <div>
@@ -203,6 +261,8 @@ export default function UserManagement() {
                 <Th>{t('nameLabel')}</Th>
                 <Th>{t('emailLabel')}</Th>
                 <Th>{t('roleLabel')}</Th>
+                {isSuperOwner && <Th>{t('passwordLabel')}</Th>}
+                {isSuperOwner && <Th>{''}</Th>}
               </tr>
             </thead>
             <tbody>
@@ -247,6 +307,45 @@ export default function UserManagement() {
                       ))}
                     </select>
                   </td>
+                  {isSuperOwner && (
+                    <td style={{ padding: '14px 20px' }}>
+                      {u.password ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 13, color: '#1a1a2e', fontFamily: 'monospace' }}>
+                            {revealedIds.has(u.id) ? u.password : '••••••••'}
+                          </span>
+                          <IconButton title={t('togglePassword')} onClick={() => toggleReveal(u.id)}>
+                            {revealedIds.has(u.id) ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </IconButton>
+                          <IconButton title={t('copyPassword')} onClick={() => handleCopyPassword(u.id, u.password)}>
+                            {copiedId === u.id ? <Check size={14} /> : <Copy size={14} />}
+                          </IconButton>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 12, color: '#b0b8c4' }}>—</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleResetPassword(u.id)}
+                        disabled={busyId === u.id}
+                        style={{ ...linkButtonStyle, marginTop: 6 }}
+                      >
+                        {t('resetPassword')}
+                      </button>
+                    </td>
+                  )}
+                  {isSuperOwner && (
+                    <td style={{ padding: '14px 20px' }}>
+                      <IconButton
+                        title={t('deleteUser')}
+                        danger
+                        disabled={busyId === u.id || u.id === currentUser.id}
+                        onClick={() => handleDeleteUser(u)}
+                      >
+                        <Trash2 size={14} />
+                      </IconButton>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -280,6 +379,41 @@ function Field({ label, children }) {
       }}>{label}</span>
       {children}
     </label>
+  );
+}
+
+const linkButtonStyle = {
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  fontSize: 12,
+  color: '#7a8394',
+  textDecoration: 'underline',
+  cursor: 'pointer',
+};
+
+function IconButton({ children, onClick, title, danger, disabled }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 26, height: 26,
+        border: '1px solid #e8e4df',
+        borderRadius: 6,
+        background: '#ffffff',
+        color: danger ? '#D96B6B' : '#7a8394',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      {children}
+    </button>
   );
 }
 

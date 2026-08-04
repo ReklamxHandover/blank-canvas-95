@@ -5,6 +5,10 @@ import { getSupabaseAdmin } from "../_shared/supabase-admin.ts";
 
 const ROLES = ["owner", "staff", "designer", "producer"] as const;
 
+// Only this specific login may delete accounts, reset passwords, or see the
+// stored plaintext password copy - not just any "owner" role account.
+const SUPER_OWNER_EMAIL = "owner@reklamx.se";
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -23,6 +27,21 @@ async function assertOwner(userId: string) {
   }
 }
 
+async function getCallerEmail(
+  claims: Record<string, unknown>,
+  userId: string,
+): Promise<string | null> {
+  if (typeof claims.email === "string" && claims.email) return claims.email;
+  const { data } = await getSupabaseAdmin().auth.admin.getUserById(userId);
+  return data.user?.email ?? null;
+}
+
+function assertSuperOwner(email: string | null) {
+  if (!email || email.toLowerCase() !== SUPER_OWNER_EMAIL) {
+    throw new AuthError("Forbidden: requires the primary owner account", 403);
+  }
+}
+
 async function countOwners() {
   const { count, error } = await getSupabaseAdmin()
     .from("profiles")
@@ -38,13 +57,15 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    const { userId } = await requireAuth(req);
+    const { userId, claims } = await requireAuth(req);
     await assertOwner(userId);
+    const callerEmail = await getCallerEmail(claims, userId);
+    const isSuperOwner = !!callerEmail && callerEmail.toLowerCase() === SUPER_OWNER_EMAIL;
 
     if (req.method === "GET") {
       const { data: profiles, error: profErr } = await supabaseAdmin
         .from("profiles")
-        .select("id, full_name, role, created_at")
+        .select("id, full_name, role, created_at, plain_password")
         .order("created_at", { ascending: true });
       if (profErr) throw new Error(profErr.message);
 
@@ -65,6 +86,7 @@ Deno.serve(async (req) => {
           fullName: p.full_name ?? "",
           role: p.role,
           email: emailById.get(p.id) ?? "",
+          ...(isSuperOwner ? { password: p.plain_password ?? null } : {}),
         })),
       );
     }
@@ -120,7 +142,7 @@ Deno.serve(async (req) => {
       // a service-role update afterwards sets the requested role.
       const { error: upsertErr } = await supabaseAdmin
         .from("profiles")
-        .upsert({ id: newId, full_name: data.fullName, updated_at: now });
+        .upsert({ id: newId, full_name: data.fullName, plain_password: data.password, updated_at: now });
       if (upsertErr) throw new Error(upsertErr.message);
 
       const { error: roleErr } = await supabaseAdmin
@@ -135,6 +157,54 @@ Deno.serve(async (req) => {
         fullName: data.fullName,
         role: data.role,
       });
+    }
+
+    if (req.method === "PATCH") {
+      assertSuperOwner(callerEmail);
+      const Body = z.object({
+        userId: z.string().uuid(),
+        password: z.string().min(6),
+      });
+      const data = Body.parse(await req.json());
+
+      const { error: authUpdateErr } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+        password: data.password,
+      });
+      if (authUpdateErr) return json({ error: authUpdateErr.message }, 400);
+
+      const { error: pwErr } = await supabaseAdmin
+        .from("profiles")
+        .update({ plain_password: data.password, updated_at: new Date().toISOString() })
+        .eq("id", data.userId);
+      if (pwErr) throw new Error(pwErr.message);
+
+      return json({ ok: true });
+    }
+
+    if (req.method === "DELETE") {
+      assertSuperOwner(callerEmail);
+      const Body = z.object({ userId: z.string().uuid() });
+      const data = Body.parse(await req.json());
+
+      if (data.userId === userId) {
+        return json({ error: "Cannot delete your own account" }, 400);
+      }
+
+      const { data: target, error: targetErr } = await supabaseAdmin
+        .from("profiles")
+        .select("role")
+        .eq("id", data.userId)
+        .maybeSingle();
+      if (targetErr) throw new Error(targetErr.message);
+      if (target?.role === "owner" && (await countOwners()) <= 1) {
+        return json({ error: "Cannot delete the last owner" }, 400);
+      }
+
+      // Deleting the auth user cascades to the matching profiles row (FK ON DELETE CASCADE).
+      const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+      if (delErr) return json({ error: delErr.message }, 400);
+
+      return json({ ok: true });
     }
 
     return json({ error: "Method not allowed" }, 405);
