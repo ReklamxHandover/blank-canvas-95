@@ -11,6 +11,10 @@ node_modules
 dist
 *.local
 
+# Secrets
+.env
+.env.*
+
 # Vercel
 .vercel
 
