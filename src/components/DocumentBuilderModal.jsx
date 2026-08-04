@@ -189,6 +189,39 @@ export default function DocumentBuilderModal({ order, onClose }) {
     }));
   };
 
+  // Sum of every row's Summa (falling back to the same antal×à-pris logic as
+  // computeSumma for rows where Summa itself hasn't been filled in).
+  const computeSumOfRows = (rows) => rows.reduce((acc, r) => {
+    const raw = (r.summa !== '' && r.summa !== null && r.summa !== undefined) ? r.summa : computeSumma(r);
+    const num = Number(raw);
+    return acc + (isNaN(num) ? 0 : num);
+  }, 0);
+
+  const handleToggleShowExklMoms = (checked) => {
+    setFields(prev => {
+      if (!checked || (prev.exklMoms !== '' && prev.exklMoms !== null && prev.exklMoms !== undefined)) {
+        return { ...prev, showExklMoms: checked };
+      }
+      const total = Math.round(computeSumOfRows(prev.rows) * 100) / 100;
+      return { ...prev, showExklMoms: checked, exklMoms: String(total) };
+    });
+  };
+
+  // Totalt (incl. moms) = Exkl. moms (or the row total if Exkl. moms hasn't
+  // been filled in) with 25% VAT added on top.
+  const handleToggleShowTotalt = (checked) => {
+    setFields(prev => {
+      if (!checked || (prev.totalt !== '' && prev.totalt !== null && prev.totalt !== undefined)) {
+        return { ...prev, showTotalt: checked };
+      }
+      const exkl = (prev.exklMoms !== '' && prev.exklMoms !== null && prev.exklMoms !== undefined)
+        ? Number(prev.exklMoms)
+        : computeSumOfRows(prev.rows);
+      const total = Math.round(exkl * 1.25 * 100) / 100;
+      return { ...prev, showTotalt: checked, totalt: String(total) };
+    });
+  };
+
   const onArtnrChange = (i, v) => {
     const next = items.find(it => String(it.artikelnummer) === String(v).trim());
     setFields(prev => ({
@@ -387,10 +420,10 @@ export default function DocumentBuilderModal({ order, onClose }) {
           </Section>
 
           <Section title="Sidfot — summor (manuella, ikryssade skrivs ut)">
-            <ToggleField checked={fields.showExklMoms} onCheck={v => set('showExklMoms', v)} label="Exkl. moms" value={fields.exklMoms} onChange={v => set('exklMoms', v)} />
+            <ToggleField checked={fields.showExklMoms} onCheck={handleToggleShowExklMoms} label="Exkl. moms" value={fields.exklMoms} onChange={v => set('exklMoms', v)} />
             <ToggleField checked={fields.showMoms} onCheck={v => set('showMoms', v)} label="Moms" value={fields.moms} onChange={v => set('moms', v)} />
             <ToggleField checked={fields.showOresavr} onCheck={v => set('showOresavr', v)} label="Öresavr" value={fields.oresavr} onChange={v => set('oresavr', v)} />
-            <ToggleField checked={fields.showTotalt} onCheck={v => set('showTotalt', v)} label="Totalt" value={fields.totalt} onChange={v => set('totalt', v)} />
+            <ToggleField checked={fields.showTotalt} onCheck={handleToggleShowTotalt} label="Totalt" value={fields.totalt} onChange={v => set('totalt', v)} />
             <ToggleField checked={fields.showOrdervarde} onCheck={v => set('showOrdervarde', v)} label="Ordervärde" value={fields.ordervarde} onChange={v => set('ordervarde', v)} />
           </Section>
         </div>
